@@ -117,8 +117,7 @@
         // ==========================================
         // ตั้งค่า URL ของ Google Apps Script Web App ที่นี่
         // ==========================================
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx11MgCag98eYeN6CMk3WgwMzwJ1nvMfiauHRU-IVo93BBbGH8HNjSLsFSiUtpCpz7N/exec'; //วาง_URL_จาก_GOOGLE_APPS_SCRIPT_ที่นี่ 
-        // ตัวอย่าง: 'https://script.google.com/macros/s/AKfycbx.../exec'
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx11MgCag98eYeN6CMk3WgwMzwJ1nvMfiauHRU-IVo93BBbGH8HNjSLsFSiUtpCpz7N/exec'; 
 
         function validateInput(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
@@ -169,7 +168,7 @@
             submitBtn.classList.add('opacity-80');
 
             try {
-                // เปลี่ยนจาก google.script.run เป็น fetch
+                // Fetch API
                 const response = await fetch(`${WEB_APP_URL}?q=${query}`);
                 
                 if (!response.ok) {
@@ -225,6 +224,10 @@
         function createVoterCard(data, index) {
             const container = document.getElementById('resultContainer');
             
+            // ตรวจสอบว่ามีลิงก์หรือไม่ (เผื่อข้อมูลเก่าไม่มี)
+            const linkConstituency = data.constituency_based && data.constituency_based !== '#' ? data.constituency_based : '#';
+            const linkPartyList = data.party_list && data.party_list !== '#' ? data.party_list : '#';
+
             const cardHTML = `
             <div class="bg-white rounded-2xl shadow-md p-5 border border-emerald-100 fade-in-up relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
@@ -279,6 +282,20 @@
                                 <span class="text-base font-bold text-emerald-700">${data.location_code || '-'}</span>
                             </div>
                         </div>
+
+                        <!-- เพิ่มปุ่ม 2 ปุ่มที่ด้านล่าง -->
+                        <div class="flex flex-col gap-3 pt-4 mt-2 border-t border-slate-100">
+                            <a href="${linkConstituency}" target="_blank" 
+                               class="flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold shadow-md shadow-green-200 transition-all active:scale-95 text-sm">
+                                <i class="fa-solid fa-user-tie text-white mr-2"></i>ผู้สมัคร ส.ส. แบบแบ่งเขตของท่าน (บัตรสีเขียว)
+                            </a>
+                            
+                            <a href="${linkPartyList}" target="_blank" 
+                               class="flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold shadow-md shadow-pink-200 transition-all active:scale-95 text-sm">
+                                <i class="fa-solid fa-users-rectangle text-white mr-2"></i>รายชื่อพรรคการเมือง (บัตรสีชมพู)
+                            </a>
+                        </div>
+
                     </div>
                 </div>
             </div>`;
