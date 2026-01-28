@@ -78,7 +78,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fa-solid fa-id-card text-emerald-400"></i>
                         </div>
-                        <!-- ปรับ maxlength เป็น 17 เพื่อรองรับขีด -->
+                        <!-- ใช้ type="tel" เพื่อให้คีย์บอร์ดมือถือขึ้นเป็นตัวเลข -->
                         <input type="tel" id="searchInput" name="searchInput" required
                             maxlength="17" inputmode="numeric" 
                             oninput="formatIDCard(this)"
@@ -122,26 +122,14 @@
 
         // ฟังก์ชันจัดรูปแบบเลขบัตรประชาชน (Input Mask)
         function formatIDCard(input) {
-            // ลบตัวอักษรที่ไม่ใช่ตัวเลขออก
             let value = input.value.replace(/\D/g, '');
             let formatted = '';
 
-            // จัดรูปแบบ x-xxxx-xxxxx-xx-x
-            if (value.length > 0) {
-                formatted += value.substring(0, 1);
-            }
-            if (value.length > 1) {
-                formatted += '-' + value.substring(1, 5);
-            }
-            if (value.length > 5) {
-                formatted += '-' + value.substring(5, 10);
-            }
-            if (value.length > 10) {
-                formatted += '-' + value.substring(10, 12);
-            }
-            if (value.length > 12) {
-                formatted += '-' + value.substring(12, 13);
-            }
+            if (value.length > 0) formatted += value.substring(0, 1);
+            if (value.length > 1) formatted += '-' + value.substring(1, 5);
+            if (value.length > 5) formatted += '-' + value.substring(5, 10);
+            if (value.length > 10) formatted += '-' + value.substring(10, 12);
+            if (value.length > 12) formatted += '-' + value.substring(12, 13);
 
             input.value = formatted;
         }
@@ -151,7 +139,7 @@
             if (navigator.vibrate) navigator.vibrate(10);
 
             const searchInput = document.getElementById('searchInput');
-            // ดึงค่าและลบขีดออกเพื่อให้เหลือเฉพาะตัวเลข 13 หลักสำหรับการค้นหา
+            // ส่งเลขดิบ 13 หลักไปที่ API (API จะเป็นคน Hash เอง)
             const rawValue = searchInput.value.replace(/-/g, ''); 
             const query = rawValue;
 
@@ -166,7 +154,6 @@
             resultContainer.innerHTML = '';
             notFoundArea.classList.add('hidden');
 
-            // ตรวจสอบความยาว (ต้องเป็น 13 หลัก)
             if (query.length !== 13) {
                 Swal.fire({
                     icon: 'warning',
@@ -195,7 +182,7 @@
             submitBtn.classList.add('opacity-80');
 
             try {
-                // Fetch API โดยส่งเลขที่ไม่มีขีดไป
+                // เรียก API
                 const response = await fetch(`${WEB_APP_URL}?q=${query}`);
                 
                 if (!response.ok) {
@@ -251,9 +238,14 @@
         function createVoterCard(data, index) {
             const container = document.getElementById('resultContainer');
             
-            // ตรวจสอบว่ามีลิงก์หรือไม่ (เผื่อข้อมูลเก่าไม่มี)
             const linkConstituency = data.constituency_based && data.constituency_based !== '#' ? data.constituency_based : '#';
             const linkPartyList = data.party_list && data.party_list !== '#' ? data.party_list : '#';
+
+            // จัด Format เลขบัตรประชาชนสำหรับการแสดงผล (x-xxxx-xxxxx-xx-x)
+            let displayID = data.id_card || '';
+            if(displayID.length === 13) {
+                displayID = displayID.substring(0,1) + '-' + displayID.substring(1,5) + '-' + displayID.substring(5,10) + '-' + displayID.substring(10,12) + '-' + displayID.substring(12,13);
+            }
 
             const cardHTML = `
             <div class="bg-white rounded-2xl shadow-md p-5 border border-emerald-100 fade-in-up relative overflow-hidden">
@@ -269,7 +261,7 @@
                             <h3 class="text-lg font-bold text-emerald-900 leading-tight">
                                 ${data.full_name}
                             </h3>
-                            <span class="text-xs text-emerald-500 font-medium bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block">ผู้มีสิทธิเลือกตั้ง</span>
+                            <span class="text-xs text-emerald-500 font-medium bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block">ID: ${displayID}</span>
                         </div>
                     </div>
 
@@ -314,7 +306,7 @@
                         <div class="flex flex-col gap-3 pt-4 mt-2 border-t border-slate-100">
                             <a href="${linkConstituency}" target="_blank" 
                                class="flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold shadow-md shadow-green-200 transition-all active:scale-95 text-sm">
-                                <i class="fa-solid fa-user-tie text-white mr-2"></i>ผู้สมัคร ส.ส. แบบแบ่งเขตของท่าน <br>(บัตรสีเขียว)
+                                <i class="fa-solid fa-user-tie text-white mr-2"></i>ผู้สมัคร ส.ส. แบบแบ่งเขต <br>(บัตรสีเขียว)
                             </a>
                             
                             <a href="${linkPartyList}" target="_blank" 
